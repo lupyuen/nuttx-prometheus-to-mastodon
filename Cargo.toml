@@ -1,0 +1,20 @@
+[package]
+name = "prometheus-to-mastodon"
+version = "1.0.0"
+edition = "2021"
+license = "Apache-2.0"
+description = "TODO"
+homepage = "TODO"
+repository = "https://github.com/lupyuen/prometheus-to-mastodon"
+readme = "README.md"
+keywords = ["nuttx", "rtos", "ci", "prometheus", "mastodon"]
+categories = ["command-line-utilities"]
+
+[dependencies]
+clap = { version = "4.5.18", features = ["derive"] }
+env_logger = "0.11.5"
+log = "0.4.22"
+regex = "1.11.1"
+reqwest = "0.12.9"
+serde_json = "1.0.133"
+tokio = { version = "1.41.0", features = ["full"] }
