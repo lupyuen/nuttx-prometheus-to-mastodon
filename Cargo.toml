@@ -1,11 +1,11 @@
 [package]
-name = "prometheus-to-mastodon"
+name = "nuttx-prometheus-to-mastodon"
 version = "1.0.0"
 edition = "2021"
 license = "Apache-2.0"
 description = "TODO"
 homepage = "TODO"
-repository = "https://github.com/lupyuen/prometheus-to-mastodon"
+repository = "https://github.com/lupyuen/nuttx-prometheus-to-mastodon"
 readme = "README.md"
 keywords = ["nuttx", "rtos", "ci", "prometheus", "mastodon"]
 categories = ["command-line-utilities"]
