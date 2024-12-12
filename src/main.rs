@@ -52,24 +52,53 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("\n\nbuild={build:?}");
         let metric = &build["metric"];
         println!("\n\nmetric={metric:?}");
+        let board = &metric["board"].as_str().unwrap();
+        let config = &metric["config"].as_str().unwrap();
+        let config_upper = config.to_uppercase();
+        let user = &metric["user"].as_str().unwrap();
+        let msg = &metric["msg"].as_str().unwrap();
+        println!("\n\nboard={board}");
+        println!("config={config}");
+        println!("user={user}");
+        println!("msg={msg}");
+
+        // Format post as...
+        // rv-virt : CITEST - Build Failed (NuttX)
+        // NuttX Dashboard: ...
+        // Build History: ...
+        // [Error Message]
+        let status = &format!(
+            r##"
+{board} : {config_upper} - Build Failed ({user})
+NuttX Dashboard: https://nuttx-dashboard.org
+Build History: https://nuttx-dashboard.org/d/fe2q876wubc3kc/nuttx-build-history?var-board={board}&var-config={config}
+
+{msg}
+            "##)
+            [..450];  // Mastodon allows only 500 chars
+
+        // Post to Mastodon
+        let token = std::env::var("MASTODON_TOKEN")
+            .expect("MASTODON_TOKEN env variable is required");
+        let params = [("status", status)];
+        let client = reqwest::Client::new();
+        let mastodon = "https://nuttx-feed.org/api/v1/statuses";
+        let res = client
+            .post(mastodon)
+            .header("Authorization", format!("Bearer {token}"))
+            .form(&params)
+            .send()
+            .await?;
+        println!("Status: {}", res.status());
+        println!("Headers:\n{:#?}", res.headers());
+        let body = res.text().await?;
+        println!("Body: {body}");
+
+        std::process::exit(0);
+
+        // Wait a while
+        sleep(Duration::from_secs(1));
     }
-
-    // Fetch the Latest Snippets, reverse chronological order
-    // let client = reqwest::Client::new();
-    // let url = format!("https://gitlab.com/api/v4/projects/{user}%2F{repo}/snippets?per_page=100&page=1");
-    // let res = client
-    //     .get(url)
-    //     .header("PRIVATE-TOKEN", token)
-    //     .send()
-    //     .await?;
-    // println!("Status: {}", res.status());
-    // println!("Headers:\n{:#?}", res.headers());
-    // let body = res.text().await?;
-    // println!("Body: {body}");
-    // let snippets: Value = serde_json::from_str(&body)?;
-
-    // Wait a while
-    sleep(Duration::from_secs(1));
 
     // Return OK
     Ok(())
