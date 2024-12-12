@@ -33,7 +33,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .await?;
     println!("res={res:?}");
     if !res.status().is_success() {
-        println!("*** Pushgateway Failed");
+        println!("*** Prometheus Failed");
         sleep(Duration::from_secs(1));
     }
     println!("Status: {}", res.status());
@@ -59,7 +59,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("user={user}");
         println!("msg={msg}");
 
-        // Format post as...
+        // Compose the Mastodon Post as...
         // rv-virt : CITEST - Build Failed (NuttX)
         // NuttX Dashboard: ...
         // Build History: ...
@@ -86,6 +86,11 @@ Build History: https://nuttx-dashboard.org/d/fe2q876wubc3kc/nuttx-build-history?
             .form(&params)
             .send()
             .await?;
+        println!("res={res:?}");
+        if !res.status().is_success() {
+            println!("*** Mastodon Failed");
+            sleep(Duration::from_secs(30));
+        }
         println!("Status: {}", res.status());
         println!("Headers:\n{:#?}", res.headers());
         let body = res.text().await?;
@@ -94,7 +99,7 @@ Build History: https://nuttx-dashboard.org/d/fe2q876wubc3kc/nuttx-build-history?
         std::process::exit(0);
 
         // Wait a while
-        sleep(Duration::from_secs(1));
+        sleep(Duration::from_secs(30));
     }
 
     // Return OK
