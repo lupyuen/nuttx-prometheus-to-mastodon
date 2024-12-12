@@ -1,8 +1,5 @@
-//! We prefer GitLab Snippets, since GitHub Gists will get blocked for overuse.
-//! Fetch the Latest GitLab Snippets / GitHub Gists by User:
-//! (1) Process the Build Log
-//! (2) Process each Build Target
-//! (3) Post to Prometheus Pushgateway
+//! (1) Fetch the Failed NuttX Builds from Prometheus
+//! (2) Post to Mastodon
 
 use std::{
     thread::sleep, 
@@ -23,7 +20,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     env_logger::init();
     // let args = Args::parse();
 
-    // Compose the Prometheus Query
+    // Fetch the Failed Builds from Prometheus
     let query = r##"build_score{config!="leds64_zig", user!="rewind", user!="nuttxlinux", user!="nuttxmacos", user!="jerpelea"} < 0.5"##;
     println!("query={query}");
     let params = [("query", query)];
@@ -47,7 +44,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let builds = &data["data"]["result"];
     println!("\n\nbuilds={builds:?}");
 
-    // Process Each Build
+    // Process Each Failed Build
     for build in builds.as_array().unwrap() {
         println!("\n\nbuild={build:?}");
         let metric = &build["metric"];
