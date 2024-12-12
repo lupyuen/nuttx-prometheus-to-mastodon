@@ -88,12 +88,15 @@ Build History: https://nuttx-dashboard.org/d/fe2q876wubc3kc/nuttx-build-history?
 
 {msg}
             "##)
-            [..450];  // Mastodon allows only 500 chars
-        let params = [("status", status)];
+            [..450];  // Mastodon allows only 500 chars        
+        let mut params = Vec::new();
+        params.push(("status", status));
 
-        // TODO: If the Mastodon Post already exists for Board and Config:
+        // If the Mastodon Post already exists for Board and Config:
         // Reply to the Mastodon Post
-        // Set in_reply_to_id to the Previous Post ID
+        if let Some(status_id) = all_builds[&target]["status_id"].as_str() {
+            params.push(("in_reply_to_id", status_id));
+        }
 
         // Post to Mastodon
         let token = std::env::var("MASTODON_TOKEN")
@@ -110,6 +113,7 @@ Build History: https://nuttx-dashboard.org/d/fe2q876wubc3kc/nuttx-build-history?
         if !res.status().is_success() {
             println!("*** Mastodon Failed");
             sleep(Duration::from_secs(30));
+            continue;
         }
         println!("Status: {}", res.status());
         println!("Headers:\n{:#?}", res.headers());
@@ -132,13 +136,10 @@ Build History: https://nuttx-dashboard.org/d/fe2q876wubc3kc/nuttx-build-history?
         } else {
             all_builds[&target]["users"] = json!([user]);
         }
-        println!("all_builds={all_builds:?}");
-
-        // For Debugging
-        std::process::exit(0);
+        println!("\n\nall_builds={all_builds:?}");
 
         // Wait a while
-        sleep(Duration::from_secs(60));
+        sleep(Duration::from_secs(30));
     }
 
     // TODO: Save the Mastodon Posts for All Builds
