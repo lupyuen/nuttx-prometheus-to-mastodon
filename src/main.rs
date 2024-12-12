@@ -96,6 +96,12 @@ Build History: https://nuttx-dashboard.org/d/fe2q876wubc3kc/nuttx-build-history?
         // Reply to the Mastodon Post
         if let Some(status_id) = all_builds[&target]["status_id"].as_str() {
             params.push(("in_reply_to_id", status_id));
+
+            // If the User already exists for the Board and Config:
+            // Skip the Mastodon Post
+            if let Some(users) = all_builds[&target]["users"].as_array() {
+                if users.contains(&json!(user)) { continue; }                
+            }
         }
 
         // Post to Mastodon
