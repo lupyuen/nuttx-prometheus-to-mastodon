@@ -44,7 +44,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let builds = &data["data"]["result"];
     println!("\n\nbuilds={builds:?}");
 
-    // Process Each Failed Build
+    // For Each Failed Build...
     for build in builds.as_array().unwrap() {
         println!("\n\nbuild={build:?}");
         let metric = &build["metric"];
@@ -74,6 +74,10 @@ Build History: https://nuttx-dashboard.org/d/fe2q876wubc3kc/nuttx-build-history?
             "##)
             [..450];  // Mastodon allows only 500 chars
 
+        // TODO: If the Mastodon Post already exists for Board and Config:
+        // Reply to the Mastodon Post
+        // Set in_reply_to_id to the Previous Post ID
+
         // Post to Mastodon
         let token = std::env::var("MASTODON_TOKEN")
             .expect("MASTODON_TOKEN env variable is required");
@@ -96,6 +100,12 @@ Build History: https://nuttx-dashboard.org/d/fe2q876wubc3kc/nuttx-build-history?
         let body = res.text().await?;
         println!("Body: {body}");
 
+        // TODO: Remember the Mastodon Post ID (Status ID)
+        let status: Value = serde_json::from_str(&body)?;
+        let status_id = status["id"].as_str().unwrap();
+        println!("status_id={status_id}");
+
+        // For Debugging
         std::process::exit(0);
 
         // Wait a while
