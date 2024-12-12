@@ -6,7 +6,10 @@ use std::{
     time::Duration, 
 };
 use clap::Parser;
-use serde_json::Value;
+use serde_json::{
+    json,
+    Value,
+};
 
 /// Command-Line Arguments
 #[derive(Parser, Debug)]
@@ -44,16 +47,29 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let builds = &data["data"]["result"];
     println!("\n\nbuilds={builds:?}");
 
+    // TODO: Load the Mastodon Posts for All Builds
+
+    // Remembers the Mastodon Posts for All Builds:
+    // {
+    //   "rv-virt:citest" : {
+    //     status_id: "12345",
+    //     users: ["nuttxpr", "NuttX", "lupyuen"]
+    //   }
+    //   "rv-virt:citest64" : ...
+    // }
+    let mut all_builds = json!({});
+
     // For Each Failed Build...
     for build in builds.as_array().unwrap() {
         println!("\n\nbuild={build:?}");
         let metric = &build["metric"];
         println!("\n\nmetric={metric:?}");
-        let board = &metric["board"].as_str().unwrap();
-        let config = &metric["config"].as_str().unwrap();
+        let board = metric["board"].as_str().unwrap();
+        let config = metric["config"].as_str().unwrap();
+        let user = metric["user"].as_str().unwrap();
+        let msg = metric["msg"].as_str().unwrap();
         let config_upper = config.to_uppercase();
-        let user = &metric["user"].as_str().unwrap();
-        let msg = &metric["msg"].as_str().unwrap();
+        let target = format!("{board}:{config}");
         println!("\n\nboard={board}");
         println!("config={config}");
         println!("user={user}");
@@ -73,6 +89,7 @@ Build History: https://nuttx-dashboard.org/d/fe2q876wubc3kc/nuttx-build-history?
 {msg}
             "##)
             [..450];  // Mastodon allows only 500 chars
+        let params = [("status", status)];
 
         // TODO: If the Mastodon Post already exists for Board and Config:
         // Reply to the Mastodon Post
@@ -81,7 +98,6 @@ Build History: https://nuttx-dashboard.org/d/fe2q876wubc3kc/nuttx-build-history?
         // Post to Mastodon
         let token = std::env::var("MASTODON_TOKEN")
             .expect("MASTODON_TOKEN env variable is required");
-        let params = [("status", status)];
         let client = reqwest::Client::new();
         let mastodon = "https://nuttx-feed.org/api/v1/statuses";
         let res = client
@@ -100,17 +116,32 @@ Build History: https://nuttx-dashboard.org/d/fe2q876wubc3kc/nuttx-build-history?
         let body = res.text().await?;
         println!("Body: {body}");
 
-        // TODO: Remember the Mastodon Post ID (Status ID)
+        // Remember the Mastodon Post ID (Status ID)
         let status: Value = serde_json::from_str(&body)?;
         let status_id = status["id"].as_str().unwrap();
         println!("status_id={status_id}");
+        all_builds[&target]["status_id"] = status_id.into();
+
+        // Append the User to All Builds
+        if let Some(users) = all_builds[&target]["users"].as_array() {
+            if !users.contains(&json!(user)) {
+                let mut users = users.clone();
+                users.push(json!(user)); 
+                all_builds[&target]["users"] = json!(users);
+            }                
+        } else {
+            all_builds[&target]["users"] = json!([user]);
+        }
+        println!("all_builds={all_builds:?}");
 
         // For Debugging
         std::process::exit(0);
 
         // Wait a while
-        sleep(Duration::from_secs(30));
+        sleep(Duration::from_secs(60));
     }
+
+    // TODO: Save the Mastodon Posts for All Builds
 
     // Return OK
     Ok(())
