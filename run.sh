@@ -11,5 +11,11 @@ set +x  ## Disable Echo
 . ../mastodon-token.sh
 set -x  ## Echo commands
 
-## Post the Failed Jobs from Prometheus to Mastodon
-cargo run
+set -e  ## Ignore errors
+for (( ; ; )); do
+    ## Post the Failed Jobs from Prometheus to Mastodon
+    cargo run
+
+    ## Wait a while
+    sleep 900
+done
