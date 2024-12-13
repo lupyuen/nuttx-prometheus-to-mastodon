@@ -37,7 +37,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // let args = Args::parse();
 
     // Fetch the Failed Builds from Prometheus
-    let query = r##"build_score{config!="leds64_zig", user!="rewind", user!="nuttxlinux", user!="nuttxmacos", user!="jerpelea"} < 0.5"##;
+    let query = r##"
+        build_score{
+            config!="leds64_zig",
+            user!="rewind",
+            user!="nuttxlinux",
+            user!="nuttxmacos",
+            user!="jerpelea"
+        } < 0.5
+    "##;
     println!("query={query}");
     let params = [("query", query)];
     let client = reqwest::Client::new();
