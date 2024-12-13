@@ -2,14 +2,27 @@
 //! (2) Post to Mastodon
 
 use std::{
-    thread::sleep, 
-    time::Duration, 
+    fs::File,
+    io::{BufReader, Write},
+    thread::sleep,
+    time::Duration,
 };
 use clap::Parser;
 use serde_json::{
     json,
+    to_string_pretty,
     Value,
 };
+
+// Remembers the Mastodon Posts for All Builds:
+// {
+//   "rv-virt:citest" : {
+//     status_id: "12345",
+//     users: ["nuttxpr", "NuttX", "lupyuen"]
+//   }
+//   "rv-virt:citest64" : ...
+// }
+const ALL_BUILDS_FILENAME: &str = "/tmp/nuttx-prometheus-to-mastodon.json";
 
 /// Command-Line Arguments
 #[derive(Parser, Debug)]
@@ -43,21 +56,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Headers:\n{:#?}", res.headers());
     let body = res.text().await?;
     println!("Body: {body}");
-    let data: Value = serde_json::from_str(&body)?;
+    let data: Value = serde_json::from_str(&body).unwrap();
     let builds = &data["data"]["result"];
     println!("\n\nbuilds={builds:?}");
 
-    // TODO: Load the Mastodon Posts for All Builds
-
-    // Remembers the Mastodon Posts for All Builds:
-    // {
-    //   "rv-virt:citest" : {
-    //     status_id: "12345",
-    //     users: ["nuttxpr", "NuttX", "lupyuen"]
-    //   }
-    //   "rv-virt:citest64" : ...
-    // }
+    // Load the Mastodon Posts for All Builds
     let mut all_builds = json!({});
+    if let Ok(file) = File::open(ALL_BUILDS_FILENAME) {
+        let reader = BufReader::new(file);
+        all_builds = serde_json::from_reader(reader).unwrap();    
+    }
 
     // For Each Failed Build...
     for build in builds.as_array().unwrap() {
@@ -88,7 +96,7 @@ Build History: https://nuttx-dashboard.org/d/fe2q876wubc3kc/nuttx-build-history?
 
 {msg}
             "##)
-            [..450];  // Mastodon allows only 500 chars        
+            [..450];  // Mastodon allows only 500 chars
         let mut params = Vec::new();
         params.push(("status", status));
 
@@ -100,7 +108,10 @@ Build History: https://nuttx-dashboard.org/d/fe2q876wubc3kc/nuttx-build-history?
             // If the User already exists for the Board and Config:
             // Skip the Mastodon Post
             if let Some(users) = all_builds[&target]["users"].as_array() {
-                if users.contains(&json!(user)) { continue; }                
+                if users.contains(&json!(user)) {
+                    println!("Skipping {user} @ {target}, already exists");
+                    continue;
+                }
             }
         }
 
@@ -117,7 +128,7 @@ Build History: https://nuttx-dashboard.org/d/fe2q876wubc3kc/nuttx-build-history?
             .await?;
         println!("res={res:?}");
         if !res.status().is_success() {
-            println!("*** Mastodon Failed");
+            println!("*** Mastodon Failed: {user} @ {target}");
             sleep(Duration::from_secs(30));
             continue;
         }
@@ -127,7 +138,7 @@ Build History: https://nuttx-dashboard.org/d/fe2q876wubc3kc/nuttx-build-history?
         println!("Body: {body}");
 
         // Remember the Mastodon Post ID (Status ID)
-        let status: Value = serde_json::from_str(&body)?;
+        let status: Value = serde_json::from_str(&body).unwrap();
         let status_id = status["id"].as_str().unwrap();
         println!("status_id={status_id}");
         all_builds[&target]["status_id"] = status_id.into();
@@ -136,19 +147,22 @@ Build History: https://nuttx-dashboard.org/d/fe2q876wubc3kc/nuttx-build-history?
         if let Some(users) = all_builds[&target]["users"].as_array() {
             if !users.contains(&json!(user)) {
                 let mut users = users.clone();
-                users.push(json!(user)); 
+                users.push(json!(user));
                 all_builds[&target]["users"] = json!(users);
-            }                
+            }
         } else {
             all_builds[&target]["users"] = json!([user]);
         }
-        println!("\n\nall_builds={all_builds:?}");
+
+        // Save the Mastodon Posts for All Builds
+        let json = to_string_pretty(&all_builds).unwrap();
+        let mut file = File::create(ALL_BUILDS_FILENAME).unwrap();
+        file.write_all(json.as_bytes()).unwrap();
+        println!("\n\nall_builds=\n{json}");
 
         // Wait a while
         sleep(Duration::from_secs(30));
     }
-
-    // TODO: Save the Mastodon Posts for All Builds
 
     // Return OK
     Ok(())
