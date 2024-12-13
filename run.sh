@@ -17,5 +17,5 @@ for (( ; ; )); do
     cargo run
 
     ## Wait a while
-    sleep 900
+    date ; sleep 900
 done
