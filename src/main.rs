@@ -83,7 +83,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         let board = metric["board"].as_str().unwrap();
         let config = metric["config"].as_str().unwrap();
         let user = metric["user"].as_str().unwrap();
-        let msg = metric["msg"].as_str().unwrap();
+        let msg = metric["msg"].as_str().unwrap_or("");
         let config_upper = config.to_uppercase();
         let target = format!("{board}:{config}");
         println!("\n\nboard={board}");
