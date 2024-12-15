@@ -60,36 +60,37 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("*** Prometheus Failed");
         sleep(Duration::from_secs(1));
     }
-    println!("Status: {}", res.status());
-    println!("Headers:\n{:#?}", res.headers());
+    // println!("Status: {}", res.status());
+    // println!("Headers:\n{:#?}", res.headers());
     let body = res.text().await?;
-    println!("Body: {body}");
+    // println!("Body: {body}");
     let data: Value = serde_json::from_str(&body).unwrap();
     let builds = &data["data"]["result"];
-    println!("\n\nbuilds={builds:?}");
+    // println!("\nbuilds={builds:?}");
 
     // Load the Mastodon Posts for All Builds
     let mut all_builds = json!({});
     if let Ok(file) = File::open(ALL_BUILDS_FILENAME) {
         let reader = BufReader::new(file);
-        all_builds = serde_json::from_reader(reader).unwrap();    
+        all_builds = serde_json::from_reader(reader).unwrap();
+        println!("\nall_builds=\n{}\n", to_string_pretty(&all_builds).unwrap());
     }
 
     // For Each Failed Build...
     for build in builds.as_array().unwrap() {
-        println!("\n\nbuild={build:?}");
+        // println!("\nbuild=<<\n{}\n>>", to_string_pretty(build).unwrap());
         let metric = &build["metric"];
-        println!("\n\nmetric={metric:?}");
+        println!("\nmetric=\n{}\n", to_string_pretty(metric).unwrap());
         let board = metric["board"].as_str().unwrap();
         let config = metric["config"].as_str().unwrap();
         let user = metric["user"].as_str().unwrap();
         let msg = metric["msg"].as_str().unwrap_or("");
         let config_upper = config.to_uppercase();
         let target = format!("{board}:{config}");
-        println!("\n\nboard={board}");
+        println!("\nboard={board}");
         println!("config={config}");
         println!("user={user}");
-        println!("msg={msg}");
+        println!("msg=\n<<\n{msg}\n>>");
 
         // Compose the Mastodon Post as...
         // rv-virt : CITEST - Build Failed (NuttX)
@@ -140,8 +141,8 @@ Build History: https://nuttx-dashboard.org/d/fe2q876wubc3kc/nuttx-build-history?
             sleep(Duration::from_secs(30));
             continue;
         }
-        println!("Status: {}", res.status());
-        println!("Headers:\n{:#?}", res.headers());
+        // println!("Status: {}", res.status());
+        // println!("Headers:\n{:#?}", res.headers());
         let body = res.text().await?;
         println!("Body: {body}");
 
@@ -166,7 +167,7 @@ Build History: https://nuttx-dashboard.org/d/fe2q876wubc3kc/nuttx-build-history?
         let json = to_string_pretty(&all_builds).unwrap();
         let mut file = File::create(ALL_BUILDS_FILENAME).unwrap();
         file.write_all(json.as_bytes()).unwrap();
-        println!("\n\nall_builds=\n{json}");
+        println!("\nall_builds=\n{json}\n");
 
         // Wait a while
         sleep(Duration::from_secs(30));
