@@ -73,21 +73,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     if let Ok(file) = File::open(ALL_BUILDS_FILENAME) {
         let reader = BufReader::new(file);
         all_builds = serde_json::from_reader(reader).unwrap();
-        println!("\nall_builds=\n{}\n", to_string_pretty(&all_builds).unwrap());
+        println!("\nall_builds=\n{}", to_string_pretty(&all_builds).unwrap());
     }
 
     // For Each Failed Build...
     for build in builds.as_array().unwrap() {
-        // println!("\nbuild=<<\n{}\n>>", to_string_pretty(build).unwrap());
+        println!("build=\n{}", to_string_pretty(build).unwrap());
         let metric = &build["metric"];
-        println!("\nmetric=\n{}\n", to_string_pretty(metric).unwrap());
+        println!("metric=\n{}", to_string_pretty(metric).unwrap());
         let board = metric["board"].as_str().unwrap();
         let config = metric["config"].as_str().unwrap();
         let user = metric["user"].as_str().unwrap();
         let msg = metric["msg"].as_str().unwrap_or("");
         let config_upper = config.to_uppercase();
         let target = format!("{board}:{config}");
-        println!("\nboard={board}");
+        println!("board={board}");
         println!("config={config}");
         println!("user={user}");
         println!("msg=\n<<\n{msg}\n>>");
@@ -118,7 +118,7 @@ Build History: https://nuttx-dashboard.org/d/fe2q876wubc3kc/nuttx-build-history?
             // Skip the Mastodon Post
             if let Some(users) = all_builds[&target]["users"].as_array() {
                 if users.contains(&json!(user)) {
-                    println!("Skipping {user} @ {target}, already exists");
+                    println!("Skipping {user} @ {target}, already exists\n");
                     continue;
                 }
             }
