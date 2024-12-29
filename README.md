@@ -6,7 +6,7 @@ Read the article...
 
 - [__"(Experimental) Mastodon Server for Apache NuttX Continuous Integration (macOS Rancher Desktop)"__](https://lupyuen.org/articles/mastodon.html)
 
-See [run.sh](run.sh)
+To Post the Failed NuttX Jobs from Prometheus to Mastodon: [run.sh](run.sh)
 
 ```bash
 ## Set the Access Token for Mastodon
