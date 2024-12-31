@@ -13,9 +13,15 @@ set -x  ## Echo commands
 
 set +e  ## Ignore errors
 for (( ; ; )); do
-    ## Post the Failed Jobs from Prometheus to Mastodon
-    cargo run
+  ## Post the Failed Jobs from Prometheus to Mastodon
+  cargo run
 
-    ## Wait a while
-    date ; sleep 900
+  ## Copy Failed Jobs to
+  ## https://lupyuen.org/nuttx-prometheus-to-mastodon.json
+  $HOME/.rd/bin/docker cp \
+    /tmp/nuttx-prometheus-to-mastodon.json \
+    lupyuen:/usr/local/apache2/htdocs
+
+  ## Wait a while
+  date ; sleep 900
 done
