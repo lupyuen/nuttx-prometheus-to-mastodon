@@ -40,7 +40,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let query = r##"
         build_score{
             config!="leds64_zig",
-            user!="rewind",
             user!="nuttxlinux",
             user!="nuttxmacos",
             user!="jerpelea"
